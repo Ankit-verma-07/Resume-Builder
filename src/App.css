@@ -1,0 +1,150 @@
+/* Add spacing between login/register buttons */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;   /* ✅ Only block horizontal scrolling */
+  min-height: 100vh;    /* ✅ Let content grow vertically */
+}
+
+
+.auth-container > div {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+/* Auth form modern styles */
+.auth-form {
+  background: #fff;
+  max-width: 350px;
+  margin: 40px auto;
+  padding: 32px 56px 24px 36px; /* Extra right padding for more space on right */
+  border-radius: 16px;
+  box-shadow: 0 4px 24px 0 rgba(60, 72, 88, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.auth-title {
+  margin-bottom: 8px;
+  color: #2d3748;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.input-group label {
+  font-size: 1rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+.input-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #f9fafb;
+  transition: border 0.2s;
+}
+.input-group input:focus {
+  border: 1.5px solid #6366f1;
+  outline: none;
+}
+.auth-btn {
+  margin-top: 8px;
+  padding: 10px 0;
+  background: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.auth-btn:hover {
+  background: linear-gradient(90deg, #60a5fa 0%, #6366f1 100%);
+}
+.auth-message {
+  margin-top: 10px;
+  color: #3182ce;
+  font-size: 1rem;
+  font-weight: 500;
+}
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Loader Animation */
+/* Circular Loader Animation */
+.loader {
+  width: 50px;
+  --b: 8px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  padding: 1px;
+  background: conic-gradient(#0000 10%,#f03355) content-box;
+  -webkit-mask:
+    repeating-conic-gradient(#0000 0deg,#000 1deg 20deg,#0000 21deg 36deg),
+    radial-gradient(farthest-side,#0000 calc(100% - var(--b) - 1px),#000 calc(100% - var(--b)));
+  -webkit-mask-composite: destination-in;
+  mask-composite: intersect;
+  animation:l4 1s infinite steps(10);
+}
+@keyframes l4 {
+  to { transform: rotate(1turn); }
+}
+.password-strength {
+  height: 6px;
+  border-radius: 3px;
+  margin-top: 4px;
+  transition: background-color 0.3s ease;
+}
+
+
