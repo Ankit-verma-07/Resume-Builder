@@ -9,7 +9,7 @@ require('dotenv').config(); // ✅ To store API key in .env
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
-const PORT =process.env.PORT || 5001;
+const PORT = 5001;
 
 app.use(cors());
 app.use(express.json());
