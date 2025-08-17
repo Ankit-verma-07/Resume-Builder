@@ -7,9 +7,10 @@ const sendWelcomeEmail = require('./sendWelcomeEmail');
 const fetch = require('node-fetch'); // ✅ Needed for calling OpenAI
 require('dotenv').config(); // ✅ To store API key in .env
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-
 const app = express();
 const PORT = 5001;
+
+
 
 app.use(cors());
 app.use(express.json());
@@ -214,6 +215,20 @@ app.post('/chat', async (req, res) => {
     res.status(500).json({ error: "Something went wrong" });
   }
 });
+
+const { searchGoogle } = require("./search");
+
+app.get("/api/search", async (req, res) => {
+  const query = req.query.q;
+  try {
+    const results = await searchGoogle(query);
+    res.json(results);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Search failed" });
+  }
+});
+
 
 
 /* ------------------- Start Server ------------------- */
