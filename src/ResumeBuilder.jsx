@@ -331,7 +331,7 @@ function ResumeBuilder() {
                         onChange={(e) =>
                           setPersonalInfo({ ...personalInfo, fullName: e.target.value })
                         }
-                        placeholder="John Doe"
+                        placeholder="Your Name"
                       />
                     </div>
                     <div className="form-group">
@@ -342,7 +342,7 @@ function ResumeBuilder() {
                         onChange={(e) =>
                           setPersonalInfo({ ...personalInfo, email: e.target.value })
                         }
-                        placeholder="john@example.com"
+                        placeholder="abc@gmail.com"
                       />
                     </div>
                     <div className="form-group">
@@ -382,7 +382,7 @@ function ResumeBuilder() {
                         onChange={(e) =>
                           setPersonalInfo({ ...personalInfo, address: e.target.value })
                         }
-                        placeholder="123 Main St, City, Country"
+                        placeholder="abc-abc, abc-abc, Country"
                       />
                     </div>
                     <div className="form-group">
