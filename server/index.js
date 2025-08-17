@@ -7,6 +7,9 @@ const sendWelcomeEmail = require('./sendWelcomeEmail');
 const fetch = require('node-fetch'); // ✅ Needed for calling OpenAI
 require('dotenv').config(); // ✅ To store API key in .env
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { searchGoogle } = require("./search");
+
+
 const app = express();
 const PORT = 5001;
 
@@ -199,24 +202,47 @@ app.post('/api/resend-otp', async (req, res) => {
   }
 });
 
-// ✅ Gemini AI setup
+// // ✅ Gemini AI setup
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/chat', async (req, res) => {
   try {
     const { message } = req.body;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(message);
+    // 1) Get fresh web context
+    const web = await searchGoogle(message);
+    const top = web.slice(0, 3); // keep it short and relevant
+    const context = top
+      .map((r, i) => `#${i + 1} ${r.title}\n${r.snippet}`) // ❌ removed the link
+      .join("\n\n");
 
-    res.json({ reply: result.response.text() });
+    // 2) Ask Gemini to answer using those sources
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = `
+Answer the user's question using only the info below.
+Do NOT include URLs or references in your answer.
+Respond naturally, like a helpful assistant.
+
+User question:
+"${message}"
+
+Fresh sources:
+${context}
+`;
+
+    const result = await model.generateContent(prompt);
+
+    res.json({
+      reply: result.response.text(), // ✅ clean text only
+      // sources: top, // ❌ remove if you don’t want to send URLs at all
+    });
   } catch (error) {
     console.error("❌ AI chat error:", error);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
 
-const { searchGoogle } = require("./search");
+
 
 app.get("/api/search", async (req, res) => {
   const query = req.query.q;
