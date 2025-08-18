@@ -9,11 +9,26 @@ function Login({ onLogin }) {
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isCancelHovered, setIsCancelHovered] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false); // ✅ New state
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
+
+    // ✅ Admin bypass check
+    if (emailOrUsername === "Admin" && password === "Admin@123") {
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem('loggedIn', 'true');
+      storage.setItem('userInfo', 'Admin');
+      setMessage('Admin login successful!');
+      setEmailOrUsername('');
+      setPassword('');
+      if (onLogin) onLogin();
+      navigate('/admin'); // ✅ go to AdminPage
+      return;
+    }
+
+    // ✅ Normal user login
     try {
       const res = await fetch('http://localhost:5001/api/login', {
         method: 'POST',
@@ -25,16 +40,15 @@ function Login({ onLogin }) {
       });
       const data = await res.json();
       if (res.ok) {
-  const storage = rememberMe ? localStorage : sessionStorage;
-  storage.setItem('loggedIn', 'true');
-  storage.setItem('userInfo', emailOrUsername); // ✅ Save email or username
-  setMessage('Login successful!');
-  setEmailOrUsername('');
-  setPassword('');
-  if (onLogin) onLogin();
-  navigate(-1);
-}
- else {
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem('loggedIn', 'true');
+        storage.setItem('userInfo', emailOrUsername);
+        setMessage('Login successful!');
+        setEmailOrUsername('');
+        setPassword('');
+        if (onLogin) onLogin();
+        navigate(-1);
+      } else {
         setMessage(data.error || 'Login failed');
       }
     } catch (err) {
@@ -73,8 +87,8 @@ function Login({ onLogin }) {
         src="/Logos/multiply.png"
         alt="Cancel"
         onClick={() => {
-        const fromPage = location.state?.from === 'resume-builder' ? '/resume-builder' : '/home';
-        navigate(fromPage);
+          const fromPage = location.state?.from === 'resume-builder' ? '/resume-builder' : '/home';
+          navigate(fromPage);
         }}
         onMouseEnter={() => setIsCancelHovered(true)}
         onMouseLeave={() => setIsCancelHovered(false)}

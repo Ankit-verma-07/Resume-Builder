@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function AdminPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
   const fetchUsers = async () => {
     setLoading(true);
-    const res = await fetch('http://localhost:5000/api/users');
+    const res = await fetch('http://localhost:5001/api/users'); // ✅ make sure matches backend port
     const data = await res.json();
     setUsers(data.users || []);
     setLoading(false);
@@ -20,16 +22,10 @@ function AdminPage() {
   const handleDelete = async (email) => {
     setMessage('');
     try {
-      const res = await fetch(`http://localhost:5000/api/users/${encodeURIComponent(email)}`, {
+      const res = await fetch(`http://localhost:5001/api/users/${encodeURIComponent(email)}`, {
         method: 'DELETE'
       });
-      let data = {};
-      try {
-        data = await res.json();
-      } catch (e) {
-        setMessage('Error parsing response');
-        return;
-      }
+      const data = await res.json();
       if (res.ok) {
         setMessage('User deleted');
         fetchUsers();
@@ -44,14 +40,8 @@ function AdminPage() {
   const handleDeleteAll = async () => {
     setMessage('');
     try {
-      const res = await fetch('http://localhost:5000/api/users', { method: 'DELETE' });
-      let data = {};
-      try {
-        data = await res.json();
-      } catch (e) {
-        setMessage('Error parsing response');
-        return;
-      }
+      const res = await fetch('http://localhost:5001/api/users', { method: 'DELETE' });
+      const data = await res.json();
       if (res.ok) {
         setMessage('All users deleted');
         fetchUsers();
@@ -63,9 +53,24 @@ function AdminPage() {
     }
   };
 
+  // ✅ Logout handler
+  const handleLogout = () => {
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('loggedIn');
+    sessionStorage.removeItem('isAdmin');
+    sessionStorage.removeItem('loggedIn');
+    navigate('/login'); // redirect to login page
+  };
+
   return (
     <div style={{ maxWidth: 600, margin: '40px auto', padding: 20, border: '1px solid #ccc', borderRadius: 8 }}>
-      <h2>Admin: Registered Users</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2>Admin: Registered Users</h2>
+        <button onClick={handleLogout} style={{ backgroundColor: '#646cff', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+          Logout
+        </button>
+      </div>
+
       <button onClick={handleDeleteAll} style={{ marginBottom: 16, color: 'red' }}>Delete All Users</button>
       {message && <div style={{ color: 'green', marginBottom: 10 }}>{message}</div>}
       {loading ? (

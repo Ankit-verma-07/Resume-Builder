@@ -8,6 +8,7 @@ import Home from './Home';
 import ModalWrapper from './ModalWrapper';
 import ResumeBuilder from './ResumeBuilder';
 import ChatWidget from './chatWidget'; // ✅ Import ChatWidget
+import AdminPage from './AdminPage';
 import './App.css';
 
 function AppRoutes() {
@@ -20,6 +21,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
         <Route path="/resume-builder" element={<ResumeBuilder />} />
+        <Route path="/admin" element={<AdminPage />} />
 
         {/* Modal routes */}
         <Route

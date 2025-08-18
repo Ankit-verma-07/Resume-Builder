@@ -243,7 +243,6 @@ ${context}
 });
 
 
-
 app.get("/api/search", async (req, res) => {
   const query = req.query.q;
   try {
@@ -252,6 +251,44 @@ app.get("/api/search", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Search failed" });
+  }
+});
+
+
+// ✅ Get all registered users
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find({}, { name: 1, email: 1, _id: 0 }); // only return name & email
+    res.json({ users });
+  } catch (err) {
+    console.error('❌ Fetch users error:', err);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// ✅ Delete single user by email
+app.delete('/api/users/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const result = await User.deleteOne({ email });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    console.error('❌ Delete user error:', err);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// ✅ Delete all users
+app.delete('/api/users', async (req, res) => {
+  try {
+    await User.deleteMany({});
+    res.json({ message: 'All users deleted' });
+  } catch (err) {
+    console.error('❌ Delete all users error:', err);
+    res.status(500).json({ error: 'Failed to delete all users' });
   }
 });
 
