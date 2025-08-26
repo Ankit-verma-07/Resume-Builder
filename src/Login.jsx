@@ -16,7 +16,7 @@ function Login({ onLogin }) {
     setMessage('');
 
     // ✅ Admin bypass check
-    if (emailOrUsername === "Admin" && password === "Admin@123") {
+    if (emailOrUsername === "Admin" && password === "Admin@123" || emailOrUsername === "admin" && password === "admin@123" || emailOrUsername === "admin" && password === "Admin@123" || emailOrUsername === "Admin" && password === "admin@123") {
       const storage = rememberMe ? localStorage : sessionStorage;
       storage.setItem('loggedIn', 'true');
       storage.setItem('userInfo', 'Admin');
