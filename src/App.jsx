@@ -10,6 +10,7 @@ import ResumeBuilder from './ResumeBuilder';
 import ChatWidget from './chatWidget'; // ✅ Import ChatWidget
 import AdminPage from './AdminPage';
 import './App.css';
+import Profile from "./Profile"; // adjust path based on your project structure
 
 function AppRoutes() {
   const location = useLocation();
@@ -18,46 +19,51 @@ function AppRoutes() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/resume-builder" element={<ResumeBuilder />} />
-        <Route path="/admin" element={<AdminPage />} />
+  <Route path="/" element={<Home />} />
+  <Route path="/home" element={<Home />} />
+  <Route path="/resume-builder" element={<ResumeBuilder />} />
+  <Route path="/admin" element={<AdminPage />} />
+  
+  {/* ✅ Add Profile route */}
+  <Route path="/profile" element={<Profile />} />
 
-        {/* Modal routes */}
-        <Route
-          path="/login"
-          element={
-            <>
-              {fromPage}
-              <ModalWrapper>
-                <Login />
-              </ModalWrapper>
-            </>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <>
-              {fromPage}
-              <ModalWrapper>
-                <Register />
-              </ModalWrapper>
-            </>
-          }
-        />
-        <Route
-          path="/reset"
-          element={
-            <>
-              {fromPage}
-              <ModalWrapper>
-                <Reset />
-              </ModalWrapper>
-            </>
-          }
-        />
-      </Routes>
+
+  {/* Modal routes */}
+  <Route
+    path="/login"
+    element={
+      <>
+        {fromPage}
+        <ModalWrapper>
+          <Login />
+        </ModalWrapper>
+      </>
+    }
+  />
+  <Route
+    path="/register"
+    element={
+      <>
+        {fromPage}
+        <ModalWrapper>
+          <Register />
+        </ModalWrapper>
+      </>
+    }
+  />
+  <Route
+    path="/reset"
+    element={
+      <>
+        {fromPage}
+        <ModalWrapper>
+          <Reset />
+        </ModalWrapper>
+      </>
+    }
+  />
+</Routes>
+
 
       {/* ✅ Floating Chat Widget will be visible on all pages */}
       <ChatWidget />

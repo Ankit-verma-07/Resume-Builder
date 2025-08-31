@@ -67,9 +67,10 @@ function Home() {
                 Login
               </button>
             )}
-            <button className="btn-grad" onClick={() => navigate('/profile')}>
-              Profile
-            </button>
+           <button className="btn-grad" onClick={() => navigate('/profile')}>
+  Profile
+</button>
+
             <button className="btn-grad" onClick={() => navigate('/about')}>
               About
             </button>
