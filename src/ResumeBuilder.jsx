@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import html2pdf from 'html2pdf.js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import './Home.css';
 
 function ResumeBuilder() {
@@ -25,13 +24,6 @@ function ResumeBuilder() {
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem('theme') === 'dark'
   );
-
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
-    { type: 'bot', text: 'Hi! I\'m your Resume Assistant powered by Gemini AI. Ask me anything about writing your resume! I can provide personalized advice and tips to help you create a standout resume.' }
-  ]);
-  const [userInput, setUserInput] = useState('');
-  const chatEndRef = useRef(null);
 
   const [isLoggedIn, setIsLoggedIn] = useState(
     localStorage.getItem('loggedIn') === 'true' ||
@@ -62,69 +54,26 @@ function ResumeBuilder() {
 
   const [showPreview, setShowPreview] = useState(false);
 
-  // Auto-scroll chat to bottom when new messages arrive
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
+    document.body.classList.toggle('dark-theme', darkMode);
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+  useEffect(() => {
+    const checkLogin = () =>
+      localStorage.getItem('loggedIn') === 'true' ||
+      sessionStorage.getItem('loggedIn') === 'true';
 
-  const handleSendMessage = async () => {
-    if (!userInput.trim()) return;
-    
-    // Add user message
-    const userMessage = { type: 'user', text: userInput };
-    setChatMessages(prev => [...prev, userMessage]);
-    setUserInput('');
-    setIsLoading(true);
+    setIsLoggedIn(checkLogin());
 
-    // Process the question and generate response
-    let botResponse = "";
-    const question = userInput.toLowerCase();
+    const savedUser =
+      localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
+    setUserInfo(savedUser || '');
+  }, [location]);
 
-    try {
-      // Initialize the API with simple configuration
-      const genAI = new GoogleGenerativeAI(API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-      // Test with a simple prompt first
-      const result = await model.generateContent("Can you help with resume writing?");
-      botResponse = (await result.response).text();
-    } catch (error) {
-      console.error('Error with Gemini API:', error);
-      
-      // Log detailed error information
-      console.log('Error details:', {
-        message: error.message,
-        name: error.name,
-        stack: error.stack,
-        response: error.response
-      });
-      
-      if (error.message?.includes('API key')) {
-        botResponse = "API key error. Please verify your API key configuration.";
-      } else if (error.message?.includes('PERMISSION_DENIED')) {
-        botResponse = "API access denied. Please check if billing is enabled for your project.";
-      } else if (error.message?.includes('RESOURCE_EXHAUSTED')) {
-        botResponse = "API quota exceeded. Please try again later.";
-      } else {
-        botResponse = "There was an error connecting to the AI service. Please try again.";
-      }
-    } finally {
-      setIsLoading(false);
-      setChatMessages(prev => [...prev, { type: 'bot', text: botResponse }]);
-    }
-};
   const addEducationEntry = () => {
     setEducationList([...educationList, { school: '', degree: '', year: '' }]);
   };
-
-  //     setChatMessages(prev => [...prev, { type: 'bot', text: botResponse }]);
-  //   }, 1000);
-  // };  const addEducationEntry = () => {
-  //   setEducationList([...educationList, { school: '', degree: '', year: '' }]);
-  // };
 
   const handleEducationChange = (index, field, value) => {
     const updatedList = [...educationList];
@@ -173,23 +122,6 @@ function ResumeBuilder() {
     setSkillsList(updated);
   };
 
-  useEffect(() => {
-    document.body.classList.toggle('dark-theme', darkMode);
-    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-  }, [darkMode]);
-
-  useEffect(() => {
-    const checkLogin = () =>
-      localStorage.getItem('loggedIn') === 'true' ||
-      sessionStorage.getItem('loggedIn') === 'true';
-
-    setIsLoggedIn(checkLogin());
-
-    const savedUser =
-      localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
-    setUserInfo(savedUser || '');
-  }, [location]);
-
   const toggleTheme = () => setDarkMode(!darkMode);
 
   const handleLogout = () => {
@@ -198,8 +130,6 @@ function ResumeBuilder() {
     localStorage.removeItem('userInfo');
     sessionStorage.removeItem('userInfo');
     setIsLoggedIn(false);
-    setUserInfo('');
-    navigate('/resume-builder');
   };
 
   const goToNextSection = () => {
@@ -331,7 +261,7 @@ function ResumeBuilder() {
                         onChange={(e) =>
                           setPersonalInfo({ ...personalInfo, fullName: e.target.value })
                         }
-                        placeholder="Your Name"
+                        placeholder="John Doe"
                       />
                     </div>
                     <div className="form-group">
@@ -342,7 +272,7 @@ function ResumeBuilder() {
                         onChange={(e) =>
                           setPersonalInfo({ ...personalInfo, email: e.target.value })
                         }
-                        placeholder="abc@gmail.com"
+                        placeholder="john@example.com"
                       />
                     </div>
                     <div className="form-group">
@@ -382,7 +312,7 @@ function ResumeBuilder() {
                         onChange={(e) =>
                           setPersonalInfo({ ...personalInfo, address: e.target.value })
                         }
-                        placeholder="abc-abc, abc-abc, Country"
+                        placeholder="123 Main St, City, Country"
                       />
                     </div>
                     <div className="form-group">
@@ -394,6 +324,28 @@ function ResumeBuilder() {
                           setPersonalInfo({ ...personalInfo, pincode: e.target.value })
                         }
                         placeholder="123456"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>LinkedIn Profile URL</label>
+                      <input
+                        type="url"
+                        value={personalInfo.linkedin}
+                        onChange={(e) =>
+                          setPersonalInfo({ ...personalInfo, linkedin: e.target.value })
+                        }
+                        placeholder="https://www.linkedin.com/in/yourprofile"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>GitHub Profile URL</label>
+                      <input
+                        type="url"
+                        value={personalInfo.github}
+                        onChange={(e) =>
+                          setPersonalInfo({ ...personalInfo, github: e.target.value })
+                        }
+                        placeholder="https://github.com/yourusername"
                       />
                     </div>
                     {selectedSection !== 'preview' && (

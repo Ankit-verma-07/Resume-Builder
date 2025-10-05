@@ -1,11 +1,12 @@
+require('dotenv').config();
 const nodemailer = require('nodemailer');
 
 // Configure your email service
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'akkisoni1517@gmail.com',       // ✅ Your Gmail
-    pass: 'jwrjvayqviywdyfx' // ✅ Your Gmail App Password
+    user: process.env.EMAIL_USER, // Use environment variable
+    pass: process.env.EMAIL_PASSWORD // Use environment variable
   }
 });
 
@@ -13,7 +14,7 @@ async function sendVerificationCode(email, name, code) {
   const expiryTime = new Date(Date.now() + 15 * 60 * 1000).toLocaleTimeString();
 
   const mailOptions = {
-    from: '"Resume Builder" <akkisoni1517@gmail.com>',
+    from: `"Resume Builder" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Your OTP for Resume Builder',
     html: `

@@ -13,7 +13,8 @@ const { searchGoogle } = require("./search");
 const app = express();
 const PORT = 5001;
 
-
+console.log('EMAIL_USER:', process.env.EMAIL_USER);
+console.log('EMAIL_PASSWORD length:', process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.length : 'undefined');
 
 app.use(cors());
 app.use(express.json());
@@ -202,24 +203,42 @@ app.post('/api/resend-otp', async (req, res) => {
   }
 });
 
-// // ✅ Gemini AI setup
+// ✅ Gemini AI setup
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/chat', async (req, res) => {
   try {
     const { message } = req.body;
 
-    // 1) Get fresh web context
+    // 1) Add current date & time for better answers
+    const now = new Date();
+    const currentDate = now.toLocaleDateString("en-IN", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+    const currentTime = now.toLocaleTimeString("en-IN", {
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true
+    });
+
+    // 2) Get fresh web context
     const web = await searchGoogle(message);
     const top = web.slice(0, 3); // keep it short and relevant
     const context = top
-      .map((r, i) => `#${i + 1} ${r.title}\n${r.snippet}`) // ❌ removed the link
+      .map((r, i) => `#${i + 1} ${r.title}\n${r.snippet}`)
       .join("\n\n");
 
-    // 2) Ask Gemini to answer using those sources
+    // 3) Build prompt including today's date and time
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const prompt = `
-Answer the user's question using only the info below.
+Today's date: ${currentDate}
+Current time: ${currentTime}
+
+Answer the user's question using the info below and today's date/time if relevant.
+If the question is about date or time, respond directly using the above values.
 Do NOT include URLs or references in your answer.
 Respond naturally, like a helpful assistant.
 
@@ -234,7 +253,6 @@ ${context}
 
     res.json({
       reply: result.response.text(), // ✅ clean text only
-      // sources: top, // ❌ remove if you don’t want to send URLs at all
     });
   } catch (error) {
     console.error("❌ AI chat error:", error);
@@ -242,17 +260,6 @@ ${context}
   }
 });
 
-
-app.get("/api/search", async (req, res) => {
-  const query = req.query.q;
-  try {
-    const results = await searchGoogle(query);
-    res.json(results);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Search failed" });
-  }
-});
 
 
 // ✅ Get all registered users

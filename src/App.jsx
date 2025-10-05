@@ -7,7 +7,7 @@ import Reset from './Reset';
 import Home from './Home';
 import ModalWrapper from './ModalWrapper';
 import ResumeBuilder from './ResumeBuilder';
-import ChatWidget from './chatWidget'; // ✅ Import ChatWidget
+
 import AdminPage from './AdminPage';
 import './App.css';
 import Profile from "./Profile"; // adjust path based on your project structure
@@ -66,7 +66,7 @@ function AppRoutes() {
 
 
       {/* ✅ Floating Chat Widget will be visible on all pages */}
-      <ChatWidget />
+
     </>
   );
 }

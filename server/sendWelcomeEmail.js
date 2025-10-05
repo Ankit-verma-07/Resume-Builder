@@ -1,17 +1,17 @@
+require('dotenv').config();
 const nodemailer = require('nodemailer');
 
-// 🔐 Replace with your Gmail and App Password
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'akkisoni1517@gmail.com',         // ✅ Your Gmail
-    pass: 'jwrjvayqviywdyfx'       // ✅ App Password from Google
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
   }
 });
 
 async function sendWelcomeEmail(email, name) {
   const mailOptions = {
-    from: '"Resume Builder" <yourgmail@gmail.com>',
+    from: `"Resume Builder" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Welcome to Resume Builder!',
     html: `
