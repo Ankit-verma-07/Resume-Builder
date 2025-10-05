@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './AdminPage.css';
 
 function AdminPage() {
   const [users, setUsers] = useState([]);
@@ -9,9 +10,13 @@ function AdminPage() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const res = await fetch('http://localhost:5001/api/users'); // ✅ make sure matches backend port
-    const data = await res.json();
-    setUsers(data.users || []);
+    try {
+      const res = await fetch('http://localhost:5001/api/users');
+      const data = await res.json();
+      setUsers(data.users || []);
+    } catch (err) {
+      setMessage('Failed to fetch users: ' + err.message);
+    }
     setLoading(false);
   };
 
@@ -53,44 +58,52 @@ function AdminPage() {
     }
   };
 
-  // ✅ Logout handler
   const handleLogout = () => {
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('loggedIn');
     sessionStorage.removeItem('isAdmin');
     sessionStorage.removeItem('loggedIn');
-    navigate('/login'); // redirect to login page
+    navigate('/login');
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '40px auto', padding: 20, border: '1px solid #ccc', borderRadius: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="admin-container">
+      <div className="admin-header">
         <h2>Admin: Registered Users</h2>
-        <button onClick={handleLogout} style={{ backgroundColor: '#646cff', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-          Logout
-        </button>
+        <button className="logout-btn" onClick={handleLogout}>Logout</button>
       </div>
 
-      <button onClick={handleDeleteAll} style={{ marginBottom: 16, color: 'red' }}>Delete All Users</button>
-      {message && <div style={{ color: 'green', marginBottom: 10 }}>{message}</div>}
+      <button className="delete-all-btn" onClick={handleDeleteAll}>Delete All Users</button>
+      {message && <div className="message">{message}</div>}
+
       {loading ? (
         <div>Loading...</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table className="admin-table">
           <thead>
             <tr>
-              <th style={{ border: '1px solid #ccc', padding: 8, color: 'black' }}>Name</th>
-              <th style={{ border: '1px solid #ccc', padding: 8, color: 'black' }}>Email</th>
-              <th style={{ border: '1px solid #ccc', padding: 8, color: 'black' }}>Action</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Feedback</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((user, idx) => (
-              <tr key={idx}>
-                <td style={{ border: '1px solid #ccc', padding: 8, color: 'black' }}>{user.name}</td>
-                <td style={{ border: '1px solid #ccc', padding: 8, color: 'black' }}>{user.email}</td>
-                <td style={{ border: '1px solid #ccc', padding: 8 }}>
-                  <button onClick={() => handleDelete(user.email)} style={{ color: 'red' }}>Delete</button>
+            {users.map((user) => (
+              <tr key={user._id}>
+                <td>{user.name}</td>
+                <td>{user.email}</td>
+                <td>
+                  {user.feedbacks && user.feedbacks.length > 0 ? (
+                    user.feedbacks.map((fb) => (
+                      <div key={fb._id || fb.message + Math.random()}>• {fb.message}</div>
+                    ))
+                  ) : (
+                    'No feedback'
+                  )}
+                </td>
+                <td>
+                  <button className="delete-btn" onClick={() => handleDelete(user.email)}>Delete</button>
                 </td>
               </tr>
             ))}

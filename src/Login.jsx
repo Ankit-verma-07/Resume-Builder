@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-
-
 function Login({ onLogin }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,15 +16,24 @@ function Login({ onLogin }) {
     setMessage('');
 
     // ✅ Admin bypass check
-    if (emailOrUsername === "Admin" && password === "Admin@123" || emailOrUsername === "admin" && password === "admin@123" || emailOrUsername === "admin" && password === "Admin@123" || emailOrUsername === "Admin" && password === "admin@123") {
+    if (
+      (emailOrUsername === "Admin" && password === "Admin@123") ||
+      (emailOrUsername === "admin" && password === "admin@123") ||
+      (emailOrUsername === "admin" && password === "Admin@123") ||
+      (emailOrUsername === "Admin" && password === "admin@123")
+    ) {
       const storage = rememberMe ? localStorage : sessionStorage;
       storage.setItem('loggedIn', 'true');
-      storage.setItem('userInfo', 'Admin');
+      storage.setItem('userInfo', JSON.stringify({ role: "admin" }));
+
+      // ✅ Notify Feedback component
+      window.dispatchEvent(new Event("userChange"));
+
       setMessage('Admin login successful!');
       setEmailOrUsername('');
       setPassword('');
       if (onLogin) onLogin();
-      navigate('/admin'); // ✅ go to AdminPage
+      navigate('/admin'); // go to AdminPage
       return;
     }
 
@@ -40,15 +47,22 @@ function Login({ onLogin }) {
           password,
         }),
       });
+
       const data = await res.json();
       if (res.ok) {
         const storage = rememberMe ? localStorage : sessionStorage;
         storage.setItem('loggedIn', 'true');
-        storage.setItem('userInfo', emailOrUsername);
+        storage.setItem('userInfo', JSON.stringify(data.user));
+
+        // ✅ Notify Feedback component
+        window.dispatchEvent(new Event("userChange"));
+
         setMessage('Login successful!');
         setEmailOrUsername('');
         setPassword('');
         if (onLogin) onLogin();
+
+        // Navigate back to previous page or home
         navigate(-1);
       } else {
         setMessage(data.error || 'Login failed');
@@ -157,7 +171,6 @@ function Login({ onLogin }) {
           </div>
         </div>
 
-        {/* ✅ Remember Me Checkbox */}
         <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
           <input
             type="checkbox"

@@ -7,10 +7,9 @@ import Reset from './Reset';
 import Home from './Home';
 import ModalWrapper from './ModalWrapper';
 import ResumeBuilder from './ResumeBuilder';
-
+import Feedback from "./Feedback";
 import AdminPage from './AdminPage';
 import './App.css';
-import Profile from "./Profile"; // adjust path based on your project structure
 
 function AppRoutes() {
   const location = useLocation();
@@ -23,9 +22,9 @@ function AppRoutes() {
   <Route path="/home" element={<Home />} />
   <Route path="/resume-builder" element={<ResumeBuilder />} />
   <Route path="/admin" element={<AdminPage />} />
-  
-  {/* ✅ Add Profile route */}
-  <Route path="/profile" element={<Profile />} />
+  <Route path="/feedback" element={<Feedback />} />
+
+ 
 
 
   {/* Modal routes */}

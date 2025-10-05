@@ -6,10 +6,20 @@ const sendVerificationCode = require('./sendVerificationCode');
 const sendWelcomeEmail = require('./sendWelcomeEmail');
 const fetch = require('node-fetch'); // ✅ Needed for calling OpenAI
 require('dotenv').config(); // ✅ To store API key in .env
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { searchGoogle } = require("./search");
+require('./db');
+const fs = require('fs');
+const path = require('path');
 
-
+// Helper to update users.json with all users
+async function updateUsersJson() {
+  try {
+    const users = await User.find({}, { _id: 0, password: 0, __v: 0 });
+    const filePath = path.join(__dirname, 'users.json');
+    fs.writeFileSync(filePath, JSON.stringify(users, null, 2));
+  } catch (err) {
+    console.error('❌ Failed to update users.json:', err);
+  }
+}
 const app = express();
 const PORT = 5001;
 
@@ -87,6 +97,7 @@ app.post('/api/verify-code', async (req, res) => {
     delete pendingRegistrations[email];
 
     await sendWelcomeEmail(email, name);
+    await updateUsersJson();
     res.status(200).json({ message: 'Registration complete' });
   } catch (err) {
     console.error('❌ OTP verification error:', err);
@@ -107,7 +118,17 @@ app.post('/api/login', async (req, res) => {
     });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-    res.json({ message: 'Login successful' });
+    // ✅ return user info so frontend can use _id for feedback
+    res.json({
+      message: 'Login successful',
+      user: {
+        _id: user._id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        feedbacks: user.feedbacks || []
+      }
+    });
   } catch (err) {
     console.error('❌ Login error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -164,6 +185,7 @@ app.post('/api/reset-password', async (req, res) => {
     await user.save();
     otpStore.delete(email);
 
+    await updateUsersJson();
     res.json({ message: 'Password reset successful' });
   } catch (err) {
     console.error('❌ Reset password error:', err);
@@ -203,69 +225,11 @@ app.post('/api/resend-otp', async (req, res) => {
   }
 });
 
-// ✅ Gemini AI setup
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-app.post('/chat', async (req, res) => {
-  try {
-    const { message } = req.body;
-
-    // 1) Add current date & time for better answers
-    const now = new Date();
-    const currentDate = now.toLocaleDateString("en-IN", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
-    const currentTime = now.toLocaleTimeString("en-IN", {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true
-    });
-
-    // 2) Get fresh web context
-    const web = await searchGoogle(message);
-    const top = web.slice(0, 3); // keep it short and relevant
-    const context = top
-      .map((r, i) => `#${i + 1} ${r.title}\n${r.snippet}`)
-      .join("\n\n");
-
-    // 3) Build prompt including today's date and time
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `
-Today's date: ${currentDate}
-Current time: ${currentTime}
-
-Answer the user's question using the info below and today's date/time if relevant.
-If the question is about date or time, respond directly using the above values.
-Do NOT include URLs or references in your answer.
-Respond naturally, like a helpful assistant.
-
-User question:
-"${message}"
-
-Fresh sources:
-${context}
-`;
-
-    const result = await model.generateContent(prompt);
-
-    res.json({
-      reply: result.response.text(), // ✅ clean text only
-    });
-  } catch (error) {
-    console.error("❌ AI chat error:", error);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-});
-
-
 
 // ✅ Get all registered users
 app.get('/api/users', async (req, res) => {
   try {
-    const users = await User.find({}, { name: 1, email: 1, _id: 0 }); // only return name & email
+const users = await User.find({}, { name: 1, email: 1, feedbacks: 1, _id: 1 });
     res.json({ users });
   } catch (err) {
     console.error('❌ Fetch users error:', err);
@@ -281,6 +245,7 @@ app.delete('/api/users/:email', async (req, res) => {
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
+    await updateUsersJson();
     res.json({ message: 'User deleted' });
   } catch (err) {
     console.error('❌ Delete user error:', err);
@@ -292,6 +257,7 @@ app.delete('/api/users/:email', async (req, res) => {
 app.delete('/api/users', async (req, res) => {
   try {
     await User.deleteMany({});
+    await updateUsersJson();
     res.json({ message: 'All users deleted' });
   } catch (err) {
     console.error('❌ Delete all users error:', err);
@@ -299,7 +265,39 @@ app.delete('/api/users', async (req, res) => {
   }
 });
 
+// ✅ Feedback API
+app.post("/api/feedback", async (req, res) => {
+  try {
+    const { userId, message } = req.body;
+    if (!userId || !message) {
+      return res.status(400).json({ error: "Missing userId or message" });
+    }
 
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.feedbacks.push({ message });
+    await user.save();
+
+    res.json({ success: true, feedbacks: user.feedbacks });
+  } catch (err) {
+    console.error("❌ Feedback error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ✅ Get a user's feedbacks
+app.get("/api/user/:id/feedbacks", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id, "feedbacks");
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json({ feedbacks: user.feedbacks });
+  } catch (err) {
+    console.error("❌ Fetch feedbacks error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 /* ------------------- Start Server ------------------- */
 app.listen(PORT, () => {
