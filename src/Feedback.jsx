@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./feedback.css";
+import "./Feedback.css";
 
 function Feedback({ show, onClose }) {
   const navigate = useNavigate();
@@ -8,6 +8,7 @@ function Feedback({ show, onClose }) {
   const [status, setStatus] = useState("");
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false); // ✅ New state
 
   // ✅ Stateful login check
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -64,12 +65,18 @@ function Feedback({ show, onClose }) {
       if (data.success) {
         setStatus("Feedback submitted successfully!");
         setMessage("");
+
+        // ✅ Show floating Thank You
+        setShowThankYou(true);
+        setTimeout(() => setShowThankYou(false), 2000); // disappear after 2s
       } else {
         setStatus(data.error || "Failed to submit feedback");
       }
     } catch (err) {
       console.error("Error submitting feedback:", err);
-      setStatus("Cannot reach server. Please make sure backend is running and CORS is enabled.");
+      setStatus(
+        "Cannot reach server. Please make sure backend is running and CORS is enabled."
+      );
     }
 
     setIsSubmitting(false);
@@ -96,6 +103,9 @@ function Feedback({ show, onClose }) {
           </button>
         </form>
         {status && <p className="status-message">{status}</p>}
+
+        {/* ✅ Floating Thank You */}
+        {showThankYou && <div className="thank-you">Thank You!</div>}
 
         {/* Login required popup inside modal */}
         {showLoginPopup && (

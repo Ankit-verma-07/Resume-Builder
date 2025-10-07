@@ -15,10 +15,12 @@ function ResumeBuilder() {
   const resumeTitleRef = useRef(null);
 
   const [selectedTemplate, setSelectedTemplate] = useState('template1');
-  const templates = [
+  const [loadedTemplates, setLoadedTemplates] = useState([]);
+  const builtinTemplates = [
     { id: 'template1', name: 'Classic', preview: '📄', color: '#4a90e2' },
     { id: 'template2', name: 'Modern', preview: '✨', color: '#2ecc71' },
   ];
+  const templates = [...builtinTemplates, ...loadedTemplates.map(t => ({ id: `custom-${t._id}`, name: t.name, color: t.accentColor || '#888', meta: t }))];
 
 
   const [darkMode, setDarkMode] = useState(
@@ -70,6 +72,23 @@ function ResumeBuilder() {
       localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo');
     setUserInfo(savedUser || '');
   }, [location]);
+
+  useEffect(() => {
+    // fetch admin-created templates
+    const load = async () => {
+      try {
+        const res = await fetch('http://localhost:5001/api/templates');
+        const data = await res.json();
+        setLoadedTemplates(data.templates || []);
+      } catch (e) {
+        // ignore if offline
+      }
+    };
+    load();
+    const onFocus = () => load();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
 
   const addEducationEntry = () => {
     setEducationList([...educationList, { school: '', degree: '', year: '' }]);
@@ -240,9 +259,9 @@ function ResumeBuilder() {
 
             <div className="sidebar-greeting" style={{ marginTop: '40px', textAlign: 'center' }}>
               <p>👋 Welcome</p>
-              <p className="user-name" style={{ fontWeight: 'bold', color: darkMode ? '#f5f5f5' : '#222' }}>
+              {/* <p className="user-name" style={{ fontWeight: 'bold', color: darkMode ? '#f5f5f5' : '#222' }}>
                 {isLoggedIn ? userInfo : 'Login to save your progress'}
-              </p>
+              </p> */}
             </div>
           </div>
 
@@ -696,11 +715,12 @@ function ResumeBuilder() {
                             transition: 'all 0.3s ease'
                           }}
                         >
-                          <div style={{ fontSize: '48px', marginBottom: '10px' }}>{template.preview}</div>
+                          <div style={{ fontSize: '48px', marginBottom: '10px' }}>{template.preview || '✦'}</div>
                           <h4 style={{ margin: '0', color: template.color }}>{template.name}</h4>
                           <p style={{ fontSize: '0.9em', color: darkMode ? '#ccc' : '#666' }}>
                             {template.id === 'template1' && 'Professional and clean layout'}
                             {template.id === 'template2' && 'Contemporary and stylish design'}
+                            {template.meta && `Custom: ${template.meta.fontFamily}, align ${template.meta.textAlign}`}
                           </p>
                         </div>
                       ))}
@@ -1179,6 +1199,15 @@ function ResumeBuilder() {
                     </button>
                     <button
                       onClick={() => {
+                        // Require login before exporting
+                        const isLoggedIn = localStorage.getItem('loggedIn') === 'true' || sessionStorage.getItem('loggedIn') === 'true';
+                        if (!isLoggedIn) {
+                          // redirect to login and return to resume-builder after login
+                          navigate('/login', { state: { from: 'resume-builder' } });
+                          return;
+                        }
+                        
+                        // proceed with export
                         const element = previewRef.current;
                         const originalBg = element.style.backgroundColor;
                         const originalColor = element.style.color;
@@ -1201,6 +1230,30 @@ function ResumeBuilder() {
                           element.style.color = originalColor;
                           element.style.border = originalBorder;
                           if (titleEl) titleEl.style.display = originalTitleDisplay || 'block';
+                          try {
+                            // send resume data to server for admin view
+                            const storageUser = JSON.parse(localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo') || 'null');
+                            const userId = storageUser?._id;
+                            if (userId) {
+                              // Capture generated PDF as blob and convert to base64
+                              // generate data URI for the PDF using toPdf().output
+                              html2pdf().from(element).toPdf().output('datauristring').then(async (pdfStr) => {
+                                try {
+                                  // pdfStr is a data URI like data:application/pdf;base64,....
+                                  const base64 = pdfStr.split(',')[1];
+                                  await fetch('http://localhost:5001/api/resume', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ userId, data: { personalInfo, experiences: experienceList, educations: educationList, projects: projectsList, pdfBase64: base64 } })
+                                  });
+                                } catch (e) {
+                                  console.warn('Could not save resume PDF to server', e);
+                                }
+                              }).catch((e) => console.warn('Could not extract PDF base64', e));
+                            }
+                          } catch (e) {
+                            console.warn('Resume save skipped', e);
+                          }
                         });
                       }}
                       className="btn-grad"

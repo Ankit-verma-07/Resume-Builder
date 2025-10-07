@@ -5,7 +5,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -15,18 +16,18 @@
 
 /* Modal Box */
 .feedback-box {
-  background-color: #fff;
+  background-color: #ffffff;
   color: #222;
   width: 450px;
   max-width: 90%;
   padding: 30px 35px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   position: relative;
-  animation: slideDown 0.3s ease-in-out;
+  animation: slideBounce 0.4s ease forwards;
+  transition: transform 0.3s ease;
 }
 
-/* Dark Mode */
 body.dark-theme .feedback-box {
   background-color: #1e1e1e;
   color: #eee;
@@ -39,17 +40,18 @@ body.dark-theme .feedback-box {
   right: 16px;
   background: transparent;
   border: none;
-  font-size: 24px;
+  font-size: 26px;
   cursor: pointer;
   color: #888;
-}
-
-body.dark-theme .feedback-close {
-  color: #ccc;
+  transition: all 0.2s ease;
 }
 
 .feedback-close:hover {
   color: #ff4d4d;
+}
+
+body.dark-theme .feedback-close {
+  color: #ccc;
 }
 
 /* Form Styles */
@@ -61,51 +63,57 @@ body.dark-theme .feedback-close {
 
 .feedback-box textarea {
   resize: none;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 14px;
+  border-radius: 12px;
   border: 1px solid #ccc;
   font-size: 15px;
   min-height: 120px;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.feedback-box textarea:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.4);
+  outline: none;
 }
 
 body.dark-theme .feedback-box textarea {
   background-color: #2c2c2c;
   border: 1px solid #555;
   color: #eee;
+  box-shadow: inset 0 2px 5px rgba(255,255,255,0.05);
 }
 
 /* Submit Button */
-.feedback-box button[type="submit"],
-.feedback-box .popup-buttons button {
+.feedback-box button[type="submit"] {
   background: linear-gradient(90deg, #4a90e2, #357ab8);
   color: #fff;
   border: none;
   padding: 12px 0;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.3s ease;
 }
 
-.feedback-box button[type="submit"]:hover,
-.feedback-box .popup-buttons button:hover {
+.feedback-box button[type="submit"]:hover {
   background: linear-gradient(90deg, #5aa0f2, #4680c0);
-}
-
-/* Popup Buttons Container */
-.feedback-box .popup-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 /* Status Message */
 .feedback-box .status-message {
-  margin-top: 10px;
+  margin-top: 12px;
   font-weight: 500;
+  font-size: 14.5px;
   color: #4caf50;
+}
+
+.feedback-box .status-message.error {
+  color: #f44336;
 }
 
 /* Popup Overlay */
@@ -115,6 +123,7 @@ body.dark-theme .feedback-box textarea {
   left: 0;
   width: 100%;
   height: 100%;
+  backdrop-filter: blur(4px);
   background: rgba(0,0,0,0.5);
   display: flex;
   justify-content: center;
@@ -124,16 +133,42 @@ body.dark-theme .feedback-box textarea {
 
 .popup-box {
   background: #fff;
-  padding: 20px 25px;
-  border-radius: 10px;
+  padding: 22px 28px;
+  border-radius: 14px;
   width: 400px;
   max-width: 90%;
   text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  animation: popupBounce 0.35s ease forwards;
 }
 
 body.dark-theme .popup-box {
   background: #1e1e1e;
   color: #eee;
+}
+
+/* Popup Buttons Container */
+.feedback-box .popup-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.feedback-box .popup-buttons button {
+  background: linear-gradient(90deg, #4a90e2, #357ab8);
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.feedback-box .popup-buttons button:hover {
+  background: linear-gradient(90deg, #5aa0f2, #4680c0);
+  transform: scale(1.05);
 }
 
 /* Animations */
@@ -142,13 +177,69 @@ body.dark-theme .popup-box {
   100% { opacity: 1; }
 }
 
-@keyframes slideDown {
+@keyframes slideBounce {
   0% {
-    transform: translateY(-50px);
+    transform: translateY(-50px) scale(0.9);
     opacity: 0;
   }
+  60% {
+    transform: translateY(10px) scale(1.02);
+    opacity: 1;
+  }
   100% {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     opacity: 1;
   }
 }
+
+@keyframes popupBounce {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Loader inside submit */
+.loader {
+  width: 35px;
+  height: 35px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #357ab8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+/* Floating Thank You */
+.thank-you {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #4caf50, #43a047);
+  color: #fff;
+  font-weight: 600;
+  padding: 10px 25px;
+  border-radius: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  animation: floatUp 2s ease-out forwards;
+  z-index: 1200;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-50px);
+  }
+}
+

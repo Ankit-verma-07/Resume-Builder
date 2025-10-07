@@ -5,14 +5,7 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-
-  // ✅ New field for feedback
-  feedbacks: [
-    {
-      message: { type: String, required: true },
-      createdAt: { type: Date, default: Date.now }
-    }
-  ]
+  // (feedbacks moved to separate collection)
 });
 
 module.exports = mongoose.model('User', userSchema);

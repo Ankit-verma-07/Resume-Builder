@@ -15,26 +15,38 @@ function Login({ onLogin }) {
     e.preventDefault();
     setMessage('');
 
-    // ✅ Admin bypass check
-    if (
-      (emailOrUsername === "Admin" && password === "Admin@123") ||
-      (emailOrUsername === "admin" && password === "admin@123") ||
-      (emailOrUsername === "admin" && password === "Admin@123") ||
-      (emailOrUsername === "Admin" && password === "admin@123")
-    ) {
-      const storage = rememberMe ? localStorage : sessionStorage;
-      storage.setItem('loggedIn', 'true');
-      storage.setItem('userInfo', JSON.stringify({ role: "admin" }));
+    // Admin login path: if username looks like admin, call admin endpoint
+    if (emailOrUsername.toLowerCase() === 'admin') {
+      try {
+        const res = await fetch('http://localhost:5001/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: emailOrUsername, password })
+        });
 
-      // ✅ Notify Feedback component
-      window.dispatchEvent(new Event("userChange"));
+        const data = await res.json();
+        if (res.ok) {
+          const storage = rememberMe ? localStorage : sessionStorage;
+          storage.setItem('loggedIn', 'true');
+          storage.setItem('userInfo', JSON.stringify({ role: 'admin', username: data.admin.username }));
 
-      setMessage('Admin login successful!');
-      setEmailOrUsername('');
-      setPassword('');
-      if (onLogin) onLogin();
-      navigate('/admin'); // go to AdminPage
-      return;
+          // Notify components
+          window.dispatchEvent(new Event('userChange'));
+
+          setMessage('Admin login successful!');
+          setEmailOrUsername('');
+          setPassword('');
+          if (onLogin) onLogin();
+          navigate('/admin');
+          return;
+        } else {
+          setMessage(data.error || 'Admin login failed');
+          return;
+        }
+      } catch (err) {
+        setMessage('Server error');
+        return;
+      }
     }
 
     // ✅ Normal user login
