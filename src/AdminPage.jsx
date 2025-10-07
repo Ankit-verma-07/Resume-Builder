@@ -546,6 +546,19 @@ function AdminPage() {
           </div>
         </div>
       )}
+      {/* Logout confirmation modal */}
+      {showLogoutConfirm && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h3>Confirm Logout</h3>
+            <p>Are you sure you want to logout?</p>
+            <div className="modal-actions">
+              <button className="btn-grad" onClick={confirmLogout}>Yes</button>
+              <button className="btn-ghost" onClick={cancelLogout}>No</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

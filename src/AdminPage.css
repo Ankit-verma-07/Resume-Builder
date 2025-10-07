@@ -202,6 +202,32 @@
 .view-resume-btn { padding: 6px 12px; border-radius: 6px; background: #646cff; color: #fff; border: none; cursor: pointer; }
 .view-resume-btn:hover { background: #4f54e1; }
 
+/* Simple modal styles */
+.modal-backdrop {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.modal {
+  background: #fff;
+  padding: 20px 22px;
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+.modal h3 { margin-top: 0; margin-bottom: 8px; }
+.modal p { margin-bottom: 16px; color: #444; }
+.modal-actions { display: flex; gap: 12px; justify-content: center; }
+
 /* Resume data card styles */
 .resume-card {
   background: #fff;
