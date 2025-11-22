@@ -393,6 +393,64 @@ app.get('/api/user-resume/:fileId', async (req, res) => {
   }
 });
 
+// Delete a user resume entry and its GridFS file (admin)
+app.delete('/api/user-resume/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const entry = await UserResume.findById(id);
+    if (!entry) return res.status(404).json({ error: 'Resume entry not found' });
+
+    // Remove the DB entry first
+    await UserResume.deleteOne({ _id: id });
+
+    // Attempt to delete the associated GridFS file if present
+    if (entry.fileId) {
+      try {
+        const fileId = new mongoose.Types.ObjectId(entry.fileId);
+        const db = mongoose.connection.db;
+        const bucket = new GridFSBucket(db, { bucketName: 'user_resume' });
+        await bucket.delete(fileId);
+      } catch (e) {
+        console.warn('Could not delete GridFS file for resume:', e);
+      }
+    }
+
+    // Also remove JSON resume documents for this user so admin 'User Resume Data' is consistent
+    try {
+      // Build a broad set of candidate matching criteria to remove any JSON resume entries
+      // that could be associated with this user. Some entries may store identifying info
+      // under `userId`, `username`, `email` or nested under `data.personalInfo`.
+      const criteria = [];
+      if (entry.userId) criteria.push({ userId: entry.userId });
+      if (entry.username) criteria.push({ username: entry.username });
+      if (entry.email) criteria.push({ email: entry.email });
+      if (entry.email) {
+        criteria.push({ 'data.personalInfo.email': entry.email });
+      }
+      if (entry.username) {
+        criteria.push({ 'data.personalInfo.username': entry.username });
+        criteria.push({ 'data.personalInfo.fullName': entry.username });
+        criteria.push({ 'data.personalInfo.name': entry.username });
+      }
+
+      // Only attempt delete if we have any criteria
+      if (criteria.length > 0) {
+        const deleteRes = await ResumeModel.deleteMany({ $or: criteria });
+        console.log('Deleted resume JSON docs count:', deleteRes.deletedCount);
+      } else {
+        console.log('No criteria available to delete resume JSON docs for entry', entry._id);
+      }
+    } catch (e) {
+      console.warn('Failed to delete resume JSON documents for user:', e);
+    }
+
+    res.json({ message: 'Resume deleted' });
+  } catch (err) {
+    console.error('❌ Delete user-resume error:', err);
+    res.status(500).json({ error: 'Failed to delete resume' });
+  }
+});
+
 // ✅ Get all resumes (admin)
 app.get('/api/resumes', async (req, res) => {
   try {

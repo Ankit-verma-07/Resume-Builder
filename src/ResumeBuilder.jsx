@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import html2pdf from 'html2pdf.js';
 import './Home.css';
+import MyResumeModal from './MyResumeModal';
 
 function ResumeBuilder() {
   const navigate = useNavigate();
@@ -32,6 +33,8 @@ function ResumeBuilder() {
     sessionStorage.getItem('loggedIn') === 'true'
   );
 
+  const [showMyResume, setShowMyResume] = useState(false);
+
   const [userInfo, setUserInfo] = useState('');
   const [selectedSection, setSelectedSection] = useState('personal');
 
@@ -55,6 +58,15 @@ function ResumeBuilder() {
   ]);
 
   const [showPreview, setShowPreview] = useState(false);
+  
+  const [validationErrors, setValidationErrors] = useState({});
+  const [toastMessage, setToastMessage] = useState('');
+
+  const showToast = (msg, duration = 3000) => {
+    try { setToastMessage(msg); } catch (e) {}
+    setTimeout(() => setToastMessage(''), duration);
+  };
+
 
   useEffect(() => {
     document.body.classList.toggle('dark-theme', darkMode);
@@ -92,6 +104,64 @@ function ResumeBuilder() {
 
   const addEducationEntry = () => {
     setEducationList([...educationList, { school: '', degree: '', year: '' }]);
+  };
+
+  const handlePersonalNext = () => {
+    const errors = {};
+    const name = (personalInfo.fullName || '').trim();
+    const email = (personalInfo.email || '').trim();
+    const phone = (personalInfo.phone || '').trim();
+    const address = (personalInfo.address || '').trim();
+    const pincode = (personalInfo.pincode || '').trim();
+
+    if (!name) errors.fullName = 'Please enter your full name.';
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) errors.email = 'Please enter your email address.';
+    else if (!emailRegex.test(email)) errors.email = 'Please enter a valid email address.';
+
+    const digitsOnly = phone.replace(/\D/g, '');
+    if (!phone) errors.phone = 'Please enter your phone number.';
+    else if (digitsOnly.length < 7) errors.phone = 'Please enter a valid phone number.';
+
+    if (!address) errors.address = 'Please enter your address.';
+
+    if (!pincode) errors.pincode = 'Please enter your pincode.';
+    else if (!/^[0-9]{4,6}$/.test(pincode)) errors.pincode = 'Please enter a valid pincode (4-6 digits).';
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
+    setValidationErrors({});
+    goToNextSection();
+  };
+
+  const validatePersonalFields = () => {
+    const errors = {};
+    const name = (personalInfo.fullName || '').trim();
+    const email = (personalInfo.email || '').trim();
+    const phone = (personalInfo.phone || '').trim();
+    const address = (personalInfo.address || '').trim();
+    const pincode = (personalInfo.pincode || '').trim();
+
+    if (!name) errors.fullName = 'Please enter your full name.';
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) errors.email = 'Please enter your email address.';
+    else if (!emailRegex.test(email)) errors.email = 'Please enter a valid email address.';
+
+    const digitsOnly = phone.replace(/\D/g, '');
+    if (!phone) errors.phone = 'Please enter your phone number.';
+    else if (digitsOnly.length < 7) errors.phone = 'Please enter a valid phone number.';
+
+    if (!address) errors.address = 'Please enter your address.';
+
+    if (!pincode) errors.pincode = 'Please enter your pincode.';
+    else if (!/^[0-9]{4,6}$/.test(pincode)) errors.pincode = 'Please enter a valid pincode (4-6 digits).';
+
+    return errors;
   };
 
   const handleEducationChange = (index, field, value) => {
@@ -182,6 +252,23 @@ function ResumeBuilder() {
   return (
 
     <div>
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          bottom: '24px',
+          maxWidth: '90%',
+          minWidth: '220px',
+          background: 'rgba(0,0,0,0.85)',
+          color: '#fff',
+          padding: '10px 16px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          zIndex: 2000,
+          textAlign: 'center'
+        }}>{toastMessage}</div>
+      )}
       <div className="theme-toggle-container">
         <label className="theme-switch">
           <input type="checkbox" checked={darkMode} onChange={toggleTheme} />
@@ -201,28 +288,26 @@ function ResumeBuilder() {
               type="text"
               placeholder="Search..."
               className="navbar-search"
-              style={{ width: '280px' }}
             />
             <button className="btn-grad" onClick={() => navigate('/')}>
               Home
             </button>
             {isLoggedIn ? (
-              <button className="btn-grad" onClick={handleLogout}>
-                Logout
-              </button>
+              <>
+                <button className="btn-grad" onClick={() => setShowMyResume(true)}>My Resume</button>
+                <button className="btn-grad" onClick={handleLogout}>
+                  Logout
+                </button>
+              </>
             ) : (
-              <button
-                className="btn-grad"
-                onClick={() =>
-                  navigate('/login', { state: { from: 'resume-builder' } })
-                }
-              >
-                Login
-              </button>
+              <>
+                <button className="btn-grad" onClick={() => navigate('/login', { state: { from: 'resume-builder' } })}>Login</button>
+              </>
             )}
           </div>
         </div>
       </nav>
+      {showMyResume && <MyResumeModal onClose={() => setShowMyResume(false)} />}
 
       <main style={{ padding: '100px 20px', textAlign: 'center' }}>
         <div className="resume-builder-container">
@@ -277,33 +362,45 @@ function ResumeBuilder() {
                       <input
                         type="text"
                         value={personalInfo.fullName}
-                        onChange={(e) =>
-                          setPersonalInfo({ ...personalInfo, fullName: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setPersonalInfo({ ...personalInfo, fullName: e.target.value });
+                          setValidationErrors(prev => ({ ...prev, fullName: undefined }));
+                        }}
                         placeholder="John Doe"
                       />
+                      {validationErrors.fullName && (
+                        <div style={{ color: '#ff4d4d', marginTop: '8px' }}>{validationErrors.fullName}</div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Email</label>
                       <input
                         type="email"
                         value={personalInfo.email}
-                        onChange={(e) =>
-                          setPersonalInfo({ ...personalInfo, email: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setPersonalInfo({ ...personalInfo, email: e.target.value });
+                          setValidationErrors(prev => ({ ...prev, email: undefined }));
+                        }}
                         placeholder="john@example.com"
                       />
+                      {validationErrors.email && (
+                        <div style={{ color: '#ff4d4d', marginTop: '8px' }}>{validationErrors.email}</div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Phone</label>
                       <input
                         type="tel"
                         value={personalInfo.phone}
-                        onChange={(e) =>
-                          setPersonalInfo({ ...personalInfo, phone: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setPersonalInfo({ ...personalInfo, phone: e.target.value });
+                          setValidationErrors(prev => ({ ...prev, phone: undefined }));
+                        }}
                         placeholder="+91 9876543210"
                       />
+                      {validationErrors.phone && (
+                        <div style={{ color: '#ff4d4d', marginTop: '8px' }}>{validationErrors.phone}</div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Upload Profile Picture</label>
@@ -321,6 +418,7 @@ function ResumeBuilder() {
                           }
                         }}
                       />
+                      
                     </div>
 
                     <div className="form-group">
@@ -328,49 +426,55 @@ function ResumeBuilder() {
                       <input
                         type="text"
                         value={personalInfo.address}
-                        onChange={(e) =>
-                          setPersonalInfo({ ...personalInfo, address: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setPersonalInfo({ ...personalInfo, address: e.target.value });
+                          setValidationErrors(prev => ({ ...prev, address: undefined }));
+                        }}
                         placeholder="123 Main St, City, Country"
                       />
+                      {validationErrors.address && (
+                        <div style={{ color: '#ff4d4d', marginTop: '8px' }}>{validationErrors.address}</div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Pincode</label>
                       <input
                         type="tel"
                         value={personalInfo.pincode}
-                        onChange={(e) =>
-                          setPersonalInfo({ ...personalInfo, pincode: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setPersonalInfo({ ...personalInfo, pincode: e.target.value });
+                          setValidationErrors(prev => ({ ...prev, pincode: undefined }));
+                        }}
                         placeholder="123456"
                       />
+                      {validationErrors.pincode && (
+                        <div style={{ color: '#ff4d4d', marginTop: '8px' }}>{validationErrors.pincode}</div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>LinkedIn Profile URL</label>
                       <input
                         type="url"
                         value={personalInfo.linkedin}
-                        onChange={(e) =>
-                          setPersonalInfo({ ...personalInfo, linkedin: e.target.value })
-                        }
+                        onChange={(e) => setPersonalInfo({ ...personalInfo, linkedin: e.target.value })}
                         placeholder="https://www.linkedin.com/in/yourprofile"
                       />
+                      
                     </div>
                     <div className="form-group">
                       <label>GitHub Profile URL</label>
                       <input
                         type="url"
                         value={personalInfo.github}
-                        onChange={(e) =>
-                          setPersonalInfo({ ...personalInfo, github: e.target.value })
-                        }
+                        onChange={(e) => setPersonalInfo({ ...personalInfo, github: e.target.value })}
                         placeholder="https://github.com/yourusername"
                       />
+                      
                     </div>
                     {selectedSection !== 'preview' && (
                       <button
                         type="button"
-                        onClick={goToNextSection}
+                        onClick={handlePersonalNext}
                         className="btn-grad"
                         style={{ marginTop: '20px', }}
                       >
@@ -1190,15 +1294,25 @@ function ResumeBuilder() {
 
                 {showPreview && (
 
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '20px', alignItems: 'center' }}>
                     <button
                       onClick={goToPreviousSection}
                       className="btn-grad"
                     >
                       ← Back
                     </button>
+
                     <button
                       onClick={() => {
+                        // Validate required personal fields before allowing export
+                        const errors = validatePersonalFields();
+                        if (Object.keys(errors).length > 0) {
+                          setValidationErrors(errors);
+                          // show a toast so user knows what to fix
+                          showToast('Please complete required personal fields before exporting.');
+                          return;
+                        }
+
                         // Require login before exporting
                         const isLoggedIn = localStorage.getItem('loggedIn') === 'true' || sessionStorage.getItem('loggedIn') === 'true';
                         if (!isLoggedIn) {
@@ -1206,7 +1320,7 @@ function ResumeBuilder() {
                           navigate('/login', { state: { from: 'resume-builder' } });
                           return;
                         }
-                        
+
                         // proceed with export
                         const element = previewRef.current;
                         const originalBg = element.style.backgroundColor;
@@ -1260,6 +1374,8 @@ function ResumeBuilder() {
                     >
                       Export as PDF
                     </button>
+
+                    
                   </div>
                 )}
               </div> 

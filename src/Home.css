@@ -12,15 +12,20 @@ body, html {
 
 /* NAVBAR */
 .navbar {
-  width: 790px;
-  margin-left: 250px;
-  height: 70px;
+  width: 820px; /* slightly smaller so it doesn't feel too wide */
+  margin-left: 240px; /* adjust left offset for visual centering */
+  height: 70px; /* fixed height to avoid children overflow */
+  display: flex;
+  align-items: center; /* vertically center content */
   background-color: #fff;
   box-shadow: 0 2px 6px 10px rgba(201, 207, 212, 0.558);
   position: sticky;
   top: 20px;
   z-index: 1000;
   border-radius: 35px;
+  box-sizing: border-box;
+  overflow: hidden; /* clip shadows if necessary */
+  padding: 0 18px; /* inner horizontal padding so children won't touch the border */
 }
 
 .navbar-search {
@@ -32,6 +37,7 @@ body, html {
   font-size: 14px;
   outline: none;
   transition: border 0.3s, box-shadow 0.3s;
+  width: 220px;
 }
 
 .navbar-search::placeholder {
@@ -48,7 +54,20 @@ body, html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
+  padding: 0; /* no vertical padding since navbar has fixed height */
+  width: 100%;
+}
+
+/* narrower navbar for guests (not logged in) */
+.navbar.guest {
+  width: 720px;
+  margin-left: 260px; /* shift to keep it visually balanced */
+}
+
+/* explicit class for logged-in state (keeps current width) */
+.navbar.logged-in {
+  width: 820px;
+  margin-left: 240px;
 }
 .navbar-brand {
   font-size: 24px;
@@ -60,7 +79,12 @@ body, html {
 }
 .navbar-links {
   display: flex;
-  gap: 12px;
+  gap: 16px;
+}
+
+/* add breathing room between brand and buttons/search */
+.navbar-brand {
+  margin-right: 16px;
 }
 
 /* Buttons */
@@ -71,12 +95,16 @@ body, html {
   color: white;
   font-weight: bold;
   font-size: 14px;
-  padding: 10px 25px;
-  border-radius: 10px;
+  padding: 8px 16px;
+  border-radius: 12px;
   border: none;
-  box-shadow: 0 0 10px #ccc;
+  box-shadow: 0 0 8px rgba(0,0,0,0.06);
   cursor: pointer;
   transition: background-position 0.5s ease, transform 0.2s ease;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .btn-grad:hover {
   background-position: right center;

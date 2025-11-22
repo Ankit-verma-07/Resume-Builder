@@ -7,20 +7,39 @@ function AdminPage() {
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'feedback' | 'resumes'
   const [resumes, setResumes] = useState([]);
   const [resumeJsons, setResumeJsons] = useState([]);
+  const [currentResumeIndex, setCurrentResumeIndex] = useState(0);
   const [templates, setTemplates] = useState([]);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
-    name: '', fontFamily: 'Arial, sans-serif', fontSize: 14, fontColor: '#222', headingColor: '#4a90e2', accentColor: '#4a90e2', textAlign: 'left', headingFontSize: 20, backgroundColor: '#ffffff',
+    name: '', fontFamily: 'Arial, sans-serif', fontSize: 14, fontColor: '#e6eefc', headingColor: '#cbd6ff', accentColor: '#4a90e2', textAlign: 'left', headingFontSize: 20, backgroundColor: '#0f1724',
     sectionStyles: {}
   });
   const [openSections, setOpenSections] = useState({});
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [pdfEntry, setPdfEntry] = useState(null);
   const navigate = useNavigate();
+  // Immediately redirect non-admin users away from this route
+  useEffect(() => {
+    let stored = null;
+    try {
+      stored = JSON.parse(sessionStorage.getItem('userInfo') || localStorage.getItem('userInfo') || 'null');
+    } catch (e) { stored = null; }
+    if (!stored || stored.role !== 'admin') {
+      // not an admin — send to home
+      navigate('/home');
+    }
+  }, []);
   // Prevent browser back navigation for admin while logged in
   useEffect(() => {
-    const isAdmin = (sessionStorage.getItem('userInfo') && JSON.parse(sessionStorage.getItem('userInfo')).role === 'admin') || (localStorage.getItem('userInfo') && JSON.parse(localStorage.getItem('userInfo')).role === 'admin') || sessionStorage.getItem('isAdmin') === 'true' || localStorage.getItem('isAdmin') === 'true';
+    // determine whether the currently stored user is an admin by reading userInfo from storage
+    let stored = null;
+    try {
+      stored = JSON.parse(sessionStorage.getItem('userInfo') || localStorage.getItem('userInfo') || 'null');
+    } catch (e) { stored = null; }
+    const isAdmin = stored && stored.role === 'admin';
     if (!isAdmin) return; // only apply when admin is logged in
 
     // Push a dummy state so back button won't leave the admin page
@@ -136,7 +155,54 @@ function AdminPage() {
     fetchResumes();
     // preload resume JSONs so 'User Resume Data' count is accurate
     fetchResumeJsons();
+    // reset carousel index whenever resume JSONs change
+    setCurrentResumeIndex(0);
+    // preload templates so the Manage Templates card shows correct count
+    fetchTemplates();
+
+    const onResumeDeleted = () => {
+      // another user deleted a resume — refresh both lists
+      fetchResumes();
+      fetchResumeJsons();
+      setMessage('Resume deleted (updated)');
+    };
+    window.addEventListener('resumeDeleted', onResumeDeleted);
+    return () => window.removeEventListener('resumeDeleted', onResumeDeleted);
   }, []);
+
+  // keep carousel index in range when resumeJsons changes
+  useEffect(() => {
+    if (!resumeJsons || resumeJsons.length === 0) {
+      setCurrentResumeIndex(0);
+      return;
+    }
+    setCurrentResumeIndex((idx) => Math.min(idx, Math.max(0, resumeJsons.length - 1)));
+  }, [resumeJsons]);
+
+  // keyboard navigation for carousel (left/right)
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (!resumeJsons || resumeJsons.length <= 1) return;
+      if (e.key === 'ArrowRight') {
+        setCurrentResumeIndex((i) => (i + 1) % resumeJsons.length);
+      } else if (e.key === 'ArrowLeft') {
+        setCurrentResumeIndex((i) => (i - 1 + resumeJsons.length) % resumeJsons.length);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [resumeJsons]);
+
+  // Explicit handlers so button clicks don't close over stale values
+  const handleNextResume = () => {
+    if (!resumeJsons || resumeJsons.length <= 1) return;
+    setCurrentResumeIndex((i) => (i + 1) % resumeJsons.length);
+  };
+
+  const handlePrevResume = () => {
+    if (!resumeJsons || resumeJsons.length <= 1) return;
+    setCurrentResumeIndex((i) => (i - 1 + resumeJsons.length) % resumeJsons.length);
+  };
 
   // Delete single user
   const handleDelete = async (email) => {
@@ -182,10 +248,8 @@ function AdminPage() {
 
   const confirmLogout = () => {
     // Perform actual logout
-    localStorage.removeItem('isAdmin');
     localStorage.removeItem('loggedIn');
     localStorage.removeItem('userInfo');
-    sessionStorage.removeItem('isAdmin');
     sessionStorage.removeItem('loggedIn');
     sessionStorage.removeItem('userInfo');
 
@@ -315,7 +379,9 @@ function AdminPage() {
                       <td data-label="Created At">{new Date(r.createdAt).toLocaleString()}</td>
                       <td data-label="Preview">
                       {r.fileId ? (
-                        <button className="view-resume-btn" onClick={() => window.open(`http://localhost:5001/api/user-resume/${r.fileId}`, '_blank')}>See resume</button>
+                        <>
+                          <button className="view-resume-btn" onClick={() => { setPdfEntry(r); setShowPdfModal(true); }}>Open PDF</button>
+                        </>
                       ) : (
                         <button className="view-resume-btn" onClick={() => alert('No binary resume stored for this entry')}>No file</button>
                       )}
@@ -331,70 +397,82 @@ function AdminPage() {
       {activeTab === 'resumeData' && (
         <div className="resume-data-section">
           {resumeJsons.length === 0 ? <div>No resume JSONs found</div> : (
-            <div style={{ display: 'grid', gap: 12 }}>
-              {resumeJsons.map(r => {
-                const data = r.data || {};
-                return (
-                <div key={r._id} className="resume-card">
-                  <div className="resume-header">
-                    <div className="resume-name">{r.username || r.email || (data.personalInfo && (data.personalInfo.name || data.personalInfo.fullName)) || 'Unknown'}</div>
-                    <div className="resume-timestamp">{new Date(r.createdAt).toLocaleString()}</div>
-                  </div>
-
-                  {data.personalInfo && (
-                    <div className="resume-section personal-info">
-                      <div className="resume-section-title">Personal Info</div>
-                      <div className="resume-kv">
-                        {Object.entries(data.personalInfo).map(([k,v]) => (<div key={k} className="kv-row"><span className="kv-key">{k}</span><span className="kv-val">{String(v)}</span></div>))}
-                      </div>
-                    </div>
-                  )}
-
-                  {data.experiences && data.experiences.length > 0 && (
-                    <div className="resume-section">
-                      <div className="resume-section-title">Experiences</div>
-                      <div className="resume-list">
-                        {data.experiences.map((exp, i) => (
-                          <div className="resume-item" key={i}>
-                            <div className="item-title">{exp.title || exp.position || 'Experience'}</div>
-                            <div className="item-sub">{exp.company || exp.organization || ''}</div>
-                            {exp.description && <div className="item-desc">{exp.description}</div>}
-                            {(exp.startDate || exp.endDate) && <div className="item-date">{exp.startDate || ''} {exp.endDate ? ` - ${exp.endDate}` : ''}</div>}
+            <div className="resume-data-carousel">
+              {resumeJsons.length > 1 && (
+                <>
+                  <button type="button" className="carousel-arrow left" onClick={handlePrevResume} aria-label="Previous resume">◀</button>
+                  <button type="button" className="carousel-arrow right" onClick={handleNextResume} aria-label="Next resume">▶</button>
+                </>
+              )}
+              <div className="resume-track-wrapper">
+                <div className="resume-track" style={{ transform: `translateX(-${currentResumeIndex * 100}%)` }}>
+                  {resumeJsons.map((r) => {
+                    const data = r.data || {};
+                    return (
+                      <div key={r._id} className="resume-slide">
+                        <div className="resume-card">
+                          <div className="resume-header">
+                            <div className="resume-name">{r.username || r.email || (data.personalInfo && (data.personalInfo.name || data.personalInfo.fullName)) || 'Unknown'}</div>
+                            <div className="resume-timestamp">{new Date(r.createdAt).toLocaleString()}</div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
-                  {data.educations && data.educations.length > 0 && (
-                    <div className="resume-section">
-                      <div className="resume-section-title">Educations</div>
-                      <div className="resume-list">
-                        {data.educations.map((ed, i) => (
-                          <div className="resume-item" key={i}><div className="item-title">{ed.degree || ed.institution}</div><div className="item-sub">{ed.institution}</div><div className="item-date">{ed.startDate || ''} {ed.endDate ? ` - ${ed.endDate}` : ''}</div></div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                          {data.personalInfo && (
+                            <div className="resume-section personal-info">
+                              <div className="resume-section-title">Personal Info</div>
+                              <div className="resume-kv">
+                                {Object.entries(data.personalInfo).map(([k,v]) => (<div key={k} className="kv-row"><span className="kv-key">{k}</span><span className="kv-val">{String(v)}</span></div>))}
+                              </div>
+                            </div>
+                          )}
 
-                  {data.projects && data.projects.length > 0 && (
-                    <div className="resume-section">
-                      <div className="resume-section-title">Projects</div>
-                      <div className="resume-list">
-                        {data.projects.map((p, i) => (<div className="resume-item" key={i}><div className="item-title">{p.name}</div><div className="item-desc">{p.description}</div></div>))}
-                      </div>
-                    </div>
-                  )}
+                          {data.experiences && data.experiences.length > 0 && (
+                            <div className="resume-section">
+                              <div className="resume-section-title">Experiences</div>
+                              <div className="resume-list">
+                                {data.experiences.map((exp, i) => (
+                                  <div className="resume-item" key={i}>
+                                    <div className="item-title">{exp.title || exp.position || 'Experience'}</div>
+                                    <div className="item-sub">{exp.company || exp.organization || ''}</div>
+                                    {exp.description && <div className="item-desc">{exp.description}</div>}
+                                    {(exp.startDate || exp.endDate) && <div className="item-date">{exp.startDate || ''} {exp.endDate ? ` - ${exp.endDate}` : ''}</div>}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
 
-                  {data.skills && data.skills.length > 0 && (
-                    <div className="resume-section">
-                      <div className="resume-section-title">Skills</div>
-                      <div className="resume-kv">{data.skills.join(', ')}</div>
-                    </div>
-                  )}
+                          {data.educations && data.educations.length > 0 && (
+                            <div className="resume-section">
+                              <div className="resume-section-title">Educations</div>
+                              <div className="resume-list">
+                                {data.educations.map((ed, i) => (
+                                  <div className="resume-item" key={i}><div className="item-title">{ed.degree || ed.institution}</div><div className="item-sub">{ed.institution}</div><div className="item-date">{ed.startDate || ''} {ed.endDate ? ` - ${ed.endDate}` : ''}</div></div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {data.projects && data.projects.length > 0 && (
+                            <div className="resume-section">
+                              <div className="resume-section-title">Projects</div>
+                              <div className="resume-list">
+                                {data.projects.map((p, i) => (<div className="resume-item" key={i}><div className="item-title">{p.name}</div><div className="item-desc">{p.description}</div></div>))}
+                              </div>
+                            </div>
+                          )}
+
+                          {data.skills && data.skills.length > 0 && (
+                            <div className="resume-section">
+                              <div className="resume-section-title">Skills</div>
+                              <div className="resume-kv">{Array.isArray(data.skills) ? data.skills.join(', ') : String(data.skills)}</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                )
-              })}
+              </div>
             </div>
           )}
         </div>
@@ -410,7 +488,7 @@ function AdminPage() {
           </div>
 
           {showTemplateForm && (
-            <div className="template-form" style={{ marginTop: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: 6 }}>
+            <div className="template-form" style={{ marginTop: '20px', padding: '15px', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, background: 'rgba(12,16,22,0.6)', color: '#eaf2ff' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label>Name</label>
@@ -469,7 +547,7 @@ function AdminPage() {
               <div style={{ marginTop: 14 }}>
                 <h4 style={{ marginBottom: 8 }}>Per-section Styles</h4>
                 {['personal','about','education','experience','skills','projects'].map(section => (
-                  <div key={section} style={{ marginBottom: 10, borderRadius: 8, padding: 8, border: '1px solid #eef', background: '#fff' }}>
+                  <div key={section} style={{ marginBottom: 10, borderRadius: 8, padding: 8, border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(18,22,30,0.6)', color: '#eaf2ff' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <strong style={{ textTransform: 'capitalize' }}>{section}</strong>
                       <button className="btn-ghost" onClick={() => setOpenSections(prev => ({ ...prev, [section]: !prev[section] }))}>{openSections[section] ? 'Hide' : 'Edit'}</button>
@@ -501,9 +579,9 @@ function AdminPage() {
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: 12, display: 'flex', gap: 12 }}>
+                <div style={{ marginTop: 12, display: 'flex', gap: 12 }}>
                 <button className="btn-grad" onClick={createTemplate}>Finish Template</button>
-                <button className="btn-grad" onClick={() => setShowTemplateForm(false)} style={{ backgroundColor: '#ccc' }}>Cancel</button>
+                <button className="btn-ghost" onClick={() => setShowTemplateForm(false)}>Cancel</button>
               </div>
             </div>
           )}
@@ -550,11 +628,48 @@ function AdminPage() {
       {showLogoutConfirm && (
         <div className="modal-backdrop">
           <div className="modal">
+            <button className="modal-close" onClick={cancelLogout} aria-label="Close">×</button>
             <h3>Confirm Logout</h3>
             <p>Are you sure you want to logout?</p>
             <div className="modal-actions">
               <button className="btn-grad" onClick={confirmLogout}>Yes</button>
               <button className="btn-ghost" onClick={cancelLogout}>No</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF preview modal (opened when admin clicks Open PDF) */}
+      {showPdfModal && pdfEntry && (
+        <div className="modal-backdrop">
+          <div className="modal modal-wide">
+            <button className="modal-close" onClick={() => { setShowPdfModal(false); setPdfEntry(null); }} aria-label="Close">×</button>
+            <h3>Resume Preview</h3>
+                <div style={{ marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
+                  <a className="btn-ghost" style={{ padding: '10px 12px' }} href={`http://localhost:5001/api/user-resume/${pdfEntry.fileId}`} download>Download PDF</a>
+                  <button className="delete-btn" onClick={async () => {
+                    if (!confirm('Delete this resume? This will remove the stored PDF file.')) return;
+                    try {
+                      const resp = await fetch(`http://localhost:5001/api/user-resume/${pdfEntry._id}`, { method: 'DELETE' });
+                      const d = await resp.json().catch(() => ({}));
+                      if (!resp.ok) {
+                        setMessage(d.error || 'Failed to delete resume');
+                        return;
+                      }
+                      // refresh resumes list and close modal
+                      setShowPdfModal(false);
+                      setPdfEntry(null);
+                      fetchResumes();
+                      fetchResumeJsons();
+                      setMessage('Resume deleted');
+                    } catch (err) {
+                      setMessage('Network error: ' + err.message);
+                    }
+                  }}>Delete</button>
+                  <button className="btn-ghost" style={{ marginLeft: 8 }} onClick={() => { setShowPdfModal(false); setPdfEntry(null); }}>Close</button>
+                </div>
+            <div style={{ height: '70vh', borderRadius: 8, overflow: 'hidden', border: '1px solid #eef' }}>
+              <iframe title="admin-resume-pdf" src={`http://localhost:5001/api/user-resume/${pdfEntry.fileId}`} style={{ width: '100%', height: '100%', border: 'none' }} />
             </div>
           </div>
         </div>

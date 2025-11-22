@@ -26,9 +26,13 @@ function Login({ onLogin }) {
 
         const data = await res.json();
         if (res.ok) {
-          const storage = rememberMe ? localStorage : sessionStorage;
-          storage.setItem('loggedIn', 'true');
-          storage.setItem('userInfo', JSON.stringify({ role: 'admin', username: data.admin.username }));
+            const storage = rememberMe ? localStorage : sessionStorage;
+            storage.setItem('loggedIn', 'true');
+            storage.setItem('userInfo', JSON.stringify({ role: 'admin', username: data.admin.username }));
+            // remove any leftover auth data from the other storage to avoid mixed states
+            const otherStorage = storage === localStorage ? sessionStorage : localStorage;
+            otherStorage.removeItem('loggedIn');
+            otherStorage.removeItem('userInfo');
 
           // Notify components
           window.dispatchEvent(new Event('userChange'));
@@ -63,8 +67,12 @@ function Login({ onLogin }) {
       const data = await res.json();
       if (res.ok) {
         const storage = rememberMe ? localStorage : sessionStorage;
+        // ensure no leftover auth lives in the other storage
         storage.setItem('loggedIn', 'true');
         storage.setItem('userInfo', JSON.stringify(data.user));
+        const otherStorage = storage === localStorage ? sessionStorage : localStorage;
+        otherStorage.removeItem('loggedIn');
+        otherStorage.removeItem('userInfo');
 
         // ✅ Notify Feedback component
         window.dispatchEvent(new Event("userChange"));
@@ -74,8 +82,9 @@ function Login({ onLogin }) {
         setPassword('');
         if (onLogin) onLogin();
 
-        // Navigate back to previous page or home
-        navigate(-1);
+        // Navigate back to where the user came from (if from resume-builder) or to Home
+        const returnTo = location.state?.from === 'resume-builder' ? '/resume-builder' : '/home';
+        navigate(returnTo);
       } else {
         setMessage(data.error || 'Login failed');
       }

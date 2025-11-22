@@ -9,6 +9,7 @@ import ModalWrapper from './ModalWrapper';
 import ResumeBuilder from './ResumeBuilder';
 import Feedback from "./Feedback";
 import AdminPage from './AdminPage';
+import MyResume from './MyResume';
 import './App.css';
 
 function AppRoutes() {
@@ -18,6 +19,8 @@ function AppRoutes() {
   return (
     <>
       <Routes>
+  <Route path="/my-resume" element={<MyResume />} />
+  
   <Route path="/" element={<Home />} />
   <Route path="/home" element={<Home />} />
   <Route path="/resume-builder" element={<ResumeBuilder />} />

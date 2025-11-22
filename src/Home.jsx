@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
 import Feedback from './Feedback';
+import MyResumeModal from './MyResumeModal';
 
 function Home() {
   const navigate = useNavigate();
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showMyResumeModal, setShowMyResumeModal] = useState(false);
 
   const [isLoggedIn, setIsLoggedIn] = useState(
     localStorage.getItem('loggedIn') === 'true' ||
@@ -67,7 +69,7 @@ function Home() {
         </label>
       </div>
 
-      <nav className="navbar">
+      <nav className={`navbar ${isLoggedIn ? 'logged-in' : 'guest'}`}>
         <div className="navbar-content">
           <div className="navbar-brand">
             Resume<span className="highlight">Builder</span>
@@ -93,15 +95,14 @@ function Home() {
             >
               Feedback
             </button>
-            <button className="btn-grad" onClick={() => navigate('/about')}>
-              About
-            </button>
-            {isLoggedIn && (
-              <button className="btn-grad" onClick={handleLogoutClick}>
-                Logout
-              </button>
-            )}
+            {isLoggedIn ? (
+              <>
+                <button className="btn-grad" onClick={() => setShowMyResumeModal(true)}>My Resume</button>
+                <button className="btn-grad" onClick={handleLogoutClick}>Logout</button>
+              </>
+            ) : null}
           </div>
+          {showMyResumeModal && <MyResumeModal onClose={() => setShowMyResumeModal(false)} />}
         </div>
       </nav>
 

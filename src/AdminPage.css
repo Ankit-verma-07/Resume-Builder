@@ -1,11 +1,13 @@
 .admin-container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 28px auto;
-  padding: 24px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
-  color: #222;
+  padding: 28px;
+  border-radius: 16px;
+  /* Darker gradient background for better contrast */
+  background: linear-gradient(135deg, #0f1724 0%, #1b2538 50%, #222837 100%);
+  color: #e8eef8;
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  box-shadow: 0 10px 40px rgba(36, 47, 103, 0.06);
 }
 
 .admin-header {
@@ -21,21 +23,30 @@
 }
 
 .logout-btn {
-  background-color: #646cff;
-  color: white;
+  background: linear-gradient(90deg,#6b6bff 0%,#8f6bff 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(107,107,255,0.14);
 }
 
 .delete-all-btn {
   margin-bottom: 16px;
-  color: red;
-  background: none;
-  border: 1px solid red;
+  color: #d04747;
+  background: rgba(208,71,71,0.06);
+  border: 1px solid rgba(208,71,71,0.18);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
 .feedback-card {
-  background-color: #fff;
+  background-color: rgba(255,255,255,0.04);
   padding: 12px 16px;
   border-radius: 8px;
-  border: 1px solid #e6e9f8;
-  box-shadow: 0 6px 18px rgba(60,64,255,0.04);
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
   font-size: 14px;
   width: 100%;
 }
@@ -49,7 +60,7 @@
 
 .feedback-message {
   flex: 1 1 auto;
-  color: #222;
+  color: #e6eefc;
   text-align: left;
   padding-right: 12px;
 }
@@ -60,7 +71,6 @@
   color: #888;
   text-align: right;
   white-space: nowrap;
-}
 }
 .user-feedback-block { margin-bottom: 18px; padding: 10px; border-bottom: 1px dashed #f2f4fb; }
 .status-message {
@@ -77,38 +87,64 @@
 }
 
 .card {
-  background: linear-gradient(180deg, #ffffff 0%, #f7f9ff 100%);
-  border-radius: 12px;
-  padding: 18px;
-  box-shadow: 0 8px 30px rgba(60, 64, 255, 0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   text-align: center;
+  border: 1px solid rgba(255,255,255,0.04);
 }
 
-.card { cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
-.card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(100,99,255,0.12); }
-.card.active { border: 1px solid #646cff; box-shadow: 0 12px 30px rgba(100,99,255,0.18); }
+.card { cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+.card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(79,84,225,0.12); }
+.card.active { border: 1px solid rgba(99,102,241,0.22); box-shadow: 0 18px 40px rgba(79,84,225,0.16); }
 
 .card-title {
   font-size: 14px;
-  color: #666;
+  color: #cbd6ff;
   margin-bottom: 8px;
+  font-weight: 700;
 }
 
 .card-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #333;
+  font-size: 30px;
+  font-weight: 800;
+  color: #ffffff;
 }
 
 /* Feedback list styles */
+.feedback-section {
+  /* make feedback area scrollable when content grows */
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+  border-radius: 12px;
+  /* reduce horizontal width so it doesn't span entire page */
+  max-width: 920px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  scrollbar-width: thin;
+  scrollbar-color: #9077ff transparent;
+}
+
+.feedback-section::-webkit-scrollbar { width: 10px; }
+.feedback-section::-webkit-scrollbar-track { background: transparent; }
+.feedback-section::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#c7b3ff,#9077ff); border-radius: 10px; }
 
 .feedback-section .feedback-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; text-align: left !important; }
+/* Ensure individual feedback cards don't overflow horizontally */
+.feedback-section .feedback-card { width: 100%; box-sizing: border-box; word-break: break-word; white-space: normal; }
 .feedback-section .feedback-card {
-  background-color: #fff;
+  background-color: rgba(255,255,255,0.03);
   padding: 12px 16px;
   border-radius: 8px;
-  border: 1px solid #e6e9f8;
-  box-shadow: 0 6px 18px rgba(60,64,255,0.04);
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
   font-size: 14px;
   width: 100%;
   display: flex !important;
@@ -119,7 +155,7 @@
 
 .feedback-section .feedback-message {
   flex: 1 1 auto;
-  color: #222;
+  color: #e6eefc;
   text-align: left !important;
   padding-right: 12px;
 }
@@ -132,17 +168,47 @@
   white-space: nowrap;
 }
 
-.user-feedback-block h4 { text-align: left !important; margin: 0 0 8px 0; font-weight: 700; }
+.user-feedback-block h4 { text-align: left !important; margin: 0 0 8px 0; font-weight: 700; color: #f0f6ff; }
 
 .user-feedback-block { display: block; width: 100%; }
 .btn-grad { background: linear-gradient(90deg,#ff6a6a 0%,#ff5ec4 100%); color: #fff; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:600; }
 .btn-grad:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255,92,196,0.12); }
-.btn-ghost { background: transparent; border:1px solid #ddd; color:#444; padding:10px 14px; border-radius:10px; cursor:pointer; }
+.btn-ghost { background: transparent; border:1px solid rgba(255,255,255,0.08); color:#f3f7ff; padding:10px 14px; border-radius:10px; cursor:pointer; }
 
-.template-preview { padding:12px; border-radius:8px; border:1px solid #eee; display:inline-block; min-width:160px; }
+.template-preview {
+  padding: 12px;
+  border-radius: 8px;
+  display: inline-block;
+  min-width: 160px;
+  background: linear-gradient(180deg, rgba(10,14,20,0.62), rgba(18,22,30,0.50));
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #e6eefc;
+}
 
-.template-section-block { background: #fff; border: 1px solid #eef2ff; padding: 10px; border-radius: 8px; }
-.template-section-block strong { text-transform: capitalize; }
+.template-section-block {
+  background: linear-gradient(180deg, rgba(12,16,22,0.66), rgba(20,24,32,0.52));
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: #eaf2ff;
+}
+.template-section-block strong { text-transform: capitalize; color: #f3f7ff; }
+
+/* Ensure resume/template sections are never plain white on dark theme */
+.resume-section, .template-section-block, .template-preview {
+  background-clip: padding-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Force dark backgrounds and readable text for the admin area to avoid white-on-white issues */
+.admin-container .template-preview,
+.admin-container .template-section-block,
+.admin-container .resume-section,
+.admin-container .resume-card {
+  background-color: rgba(18,22,30,0.72) !important;
+  border-color: rgba(255,255,255,0.06) !important;
+  color: #eaf2ff !important;
+}
 
 @media (max-width: 900px) {
   .dashboard-cards { grid-template-columns: repeat(2,1fr); }
@@ -155,27 +221,45 @@
 }
 
 .admin-table th, .admin-table td {
-  border: 1px solid #ccc;
-  padding: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 12px;
   text-align: left;
   vertical-align: top;
+  color: #e6eefc;
 }
 
 .admin-table th {
-  background-color: #e0e0e0;
+  background-color: rgba(255,255,255,0.04);
+  color: #f3f7ff;
+  font-weight: 700;
+}
+
+.admin-table td {
+  background-color: rgba(255,255,255,0.02);
 }
 
 .delete-btn {
-  color: red;
-  background: none;
-  border: 1px solid red;
-  padding: 4px 8px;
-  border-radius: 4px;
+  color: #ff6b6b;
+  background: transparent;
+  border: 1px solid rgba(255,107,107,0.18);
+  padding: 6px 10px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
 .delete-btn:hover {
-  background-color: #ffe6e6;
+  background-color: rgba(255,107,107,0.06);
+}
+
+/* Inputs inside admin table should match dark theme */
+.admin-table input,
+.admin-table textarea,
+.admin-table select {
+  background: rgba(255,255,255,0.06);
+  color: #e6eefc;
+  border: 1px solid rgba(255,255,255,0.04);
+  padding: 8px 10px;
+  border-radius: 6px;
 }
 
 
@@ -224,44 +308,114 @@
   width: 100%;
   text-align: center;
 }
+/* ensure modal text is readable even when dark-theme is active */
+.modal { color: #111; }
+/* allow absolutely positioned close button inside modal */
+.modal { position: relative; }
+.modal-wide { max-width: 1100px; width: calc(100% - 40px); }
+
+/* top-right close (cancel) button for modals */
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+.modal-close:hover { background: rgba(0,0,0,0.04); color: #222; }
 .modal h3 { margin-top: 0; margin-bottom: 8px; }
 .modal p { margin-bottom: 16px; color: #444; }
 .modal-actions { display: flex; gap: 12px; justify-content: center; }
 
+/* Buttons inside white modals need dark text for contrast */
+.modal .btn-ghost {
+  color: #222 !important;
+  border-color: rgba(0,0,0,0.08) !important;
+  background: transparent !important;
+}
+.modal .btn-grad { box-shadow: none; }
+
 /* Resume data card styles */
 .resume-card {
-  background: #fff;
-  border: 1px solid #e6eefb;
-  border-radius: 10px;
-  padding: 18px 22px;
-  box-shadow: 0 8px 30px rgba(60,64,255,0.04);
-  margin-bottom: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 22px 26px;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.5);
+  margin: 18px auto 24px auto;
+  max-width: 980px;
+  color: #eef6ff;
 }
 .resume-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
-.resume-name { font-weight: 700; font-size: 18px; }
-.resume-timestamp { color: #777; font-size: 13px; }
+.resume-name { font-weight: 700; font-size: 20px; color: #ffffff; }
+.resume-timestamp { color: rgba(235,240,255,0.7); font-size: 13px; }
 
-.resume-section { margin: 10px auto; max-width: 880px; }
-.resume-section-title { font-weight: 700; margin-bottom: 10px; font-size: 18px; text-align: center; }
-.resume-kv { color: #222; }
-.personal-info .resume-kv { display: grid; grid-template-columns: 1fr 2fr; gap: 6px 18px; align-items: start; max-width: 640px; margin: 0 auto 6px; }
+.resume-section { margin: 10px auto; max-width: 920px; }
+.resume-section-title { font-weight: 700; margin-bottom: 14px; font-size: 20px; text-align: center; color: rgba(235,240,255,0.85); }
+.resume-kv { color: #e6eefc; }
+.personal-info .resume-kv { display: grid; grid-template-columns: 1fr 2fr; gap: 6px 18px; align-items: start; max-width: 720px; margin: 0 auto 12px; }
 .kv-row { display: contents; }
-.kv-key { font-weight: 700; color: #222; text-transform: capitalize; }
-.kv-val { color: #333; }
-.resume-list { display: flex; flex-direction: column; gap: 10px; }
+.kv-key { font-weight: 700; color: #e6eefc; text-transform: capitalize; }
+.kv-val { color: #f5f8ff; }
+.resume-list { display: flex; flex-direction: column; gap: 14px; }
 .resume-item { max-width: 820px; }
-.item-title { font-weight: 700; text-align: left; }
-.item-sub { color: #444; margin-bottom: 6px; text-align: left; }
-.item-desc { color: #333; margin: 6px 0; text-align: left; }
-.item-date { color: #888; font-size: 13px; text-align: left; }
+.item-title { font-weight: 700; text-align: left; color: #fff; }
+.item-sub { color: rgba(235,240,255,0.85); margin-bottom: 6px; text-align: left; }
+.item-desc { color: rgba(235,240,255,0.9); margin: 6px 0; text-align: left; }
+.item-date { color: rgba(235,240,255,0.65); font-size: 13px; text-align: left; }
 
 /* make the overall card content more airy */
 .resume-card { padding: 22px; }
+
+/* Carousel for resume JSON entries */
+.resume-data-carousel { position: relative; max-width: 980px; margin: 18px auto 24px auto; }
+.resume-track-wrapper { overflow: hidden; }
+.resume-track { display: flex; transition: transform 0.45s cubic-bezier(.2,.9,.2,1); }
+.resume-slide { flex: 0 0 100%; box-sizing: border-box; padding: 6px 12px; }
+.resume-slide .resume-card { margin: 0 auto; max-width: 100%; }
+
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #eaf2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+  z-index: 60;
+  pointer-events: auto;
+}
+.carousel-arrow.left { left: 12px; right: auto; }
+.carousel-arrow.right { right: 12px; left: auto; }
+.carousel-arrow.left:hover { transform: translateY(-50%) translateX(-6px); background: rgba(255,255,255,0.08); }
+.carousel-arrow.right:hover { transform: translateY(-50%) translateX(6px); background: rgba(255,255,255,0.08); }
+
+/* Ensure arrows are clickable above slides */
+.resume-data-carousel .carousel-arrow { z-index: 60; }
+
+@media (max-width: 900px) {
+  .resume-slide { padding: 8px; }
+  .carousel-arrow { width: 36px; height: 36px; right: 10px; }
+}
 
 @media (max-width: 900px) {
   .personal-info .resume-kv { grid-template-columns: 1fr; }
